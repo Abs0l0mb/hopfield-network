@@ -2,10 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import ArtistAnimation
 
-# ---------------#
-#   FUNCTIONS    #
-# ---------------#
-
 # useful for debugging, checks the amount of differences between two patterns and displays that number
 def test_differences(pattern1, pattern2):
     if len(pattern1) != len(pattern2):
@@ -49,11 +45,9 @@ def perturb_pattern(pattern, nb_changes):
     return disturbed_pattern
 
 
-
 def pattern_match(memorized_patterns, pattern):
     """
-    Check if a pattern matches any of the memorized patterns.
-    !! modify the index thing !!
+    Checks if a pattern matches any of the memorized patterns.
 
     Parameters:
     memorized_patterns (list): List of memorized patterns for comparison.
@@ -85,6 +79,7 @@ def hebbian_weights(patterns):
     np.fill_diagonal(weight_matrix, 0)
     return weight_matrix
 
+
 def storkey_weights(patterns):
     """
     Compute the weight matrix using Storkey learning rule.
@@ -99,10 +94,8 @@ def storkey_weights(patterns):
     N = len(patterns[0])
     weight_matrix = np.zeros((N, N))
     for pattern in patterns:
-        #compute the effect of self connexions to later remove them
         self_connexions = weight_matrix * pattern.reshape((1, -1))
         np.fill_diagonal(self_connexions, 0)
-        #calculate  the PH_product in advance since the pi*hij product is just the transposed pi*hji product.
         PH_product = pattern * np.dot(weight_matrix, pattern.reshape((-1, 1))) - (np.diag(weight_matrix)*pattern).reshape((-1, 1)) - self_connexions
         weight_matrix += ((np.outer(pattern, pattern)) - PH_product - PH_product.T)/len(pattern)
     np.fill_diagonal(weight_matrix, 0)
@@ -165,7 +158,6 @@ def dynamics(state, weights, max_ite=20):
     """
     state_history = [np.copy(state)]
     for t in range(max_ite):
-        print(t)
         state = update(state, weights)
         if np.array_equal(state, state_history[-1]) and t != 0:
             break
@@ -173,7 +165,7 @@ def dynamics(state, weights, max_ite=20):
     return state_history
 
 
-def dynamics_async(state, weights, max_ite, convergence_num_iter):  # check si la fin marche
+def dynamics_async(state, weights, max_ite, convergence_num_iter):
     """
     Run a dynamical system asynchronously until convergence or a maximum number of iterations.
     Commented the energy part for faster testing
@@ -194,13 +186,10 @@ def dynamics_async(state, weights, max_ite, convergence_num_iter):  # check si l
         state = update_async(state, weights)
         state_history.append(state.copy())
 
-        print(t)
         if(t%999 == 0):
             state_video_history.append(state.copy())
 
         if t >= convergence_num_iter:
-            # check after every step of convergence_num_iter ? faster but less acurate ?
-            #recent_history = state_history[-convergence_num_iter:]
             if np.array_equal(state_history[-1], state_history[-2]):
                 nb_recurences += 1
             else:
@@ -210,7 +199,7 @@ def dynamics_async(state, weights, max_ite, convergence_num_iter):  # check si l
     return state_video_history
 
 
-def energy(state, weights): #A OPTIMISER !!!
+def energy(state, weights): #Optimization required
     """
     Calculate the energy of a state in the system based on given weights.
 
@@ -244,90 +233,4 @@ def save_video(state_list, out_path):
 
     animation = ArtistAnimation(plt.gcf(), frames, interval=500, blit=True)
     animation.save(out_path, writer='pillow', fps=2) 
-    
-def storkey_weights_test(patterns):
-    M, N = len(patterns), len(patterns[0])
-
-    h = np.zeros((N, N))
-    new_matrix = np.zeros((N, N))
-    old_matrix = np.zeros((N, N))
-
-    for mu in range(M):
-        old_matrix = np.copy(new_matrix)
-        new_matrix = np.zeros((N, N))
-        
-        h += np.dot(old_matrix, patterns[:,mu]) - np.outer(patterns[:,mu], patterns[:,mu])
-        
-        for i in range(N):
-            for j in range(N):
-                new_matrix[i, j] = old_matrix[i, j] + (1 / N) * (
-                        patterns[mu, i] * patterns[mu, j] -
-                        patterns[mu, i] * h[i, j] -
-                        h[i, j] * patterns[mu, j]
-                )
-
-    return new_matrix
-
-def storkey_weights_test_VALID(patterns):
-
-    M = len(patterns)
-    N = len(patterns[0])
-
-    # Create empty weight matrix
-    h = np.zeros((N, N))
-    new_matrix = np.zeros((N, N))
-    old_matrix = np.zeros((N, N))
-
-    for mu in range(M):
-
-        old_matrix = np.copy(new_matrix)
-        new_matrix = np.zeros((N, N))
-        h = np.zeros((N, N))
-
-        for i in range(N):
-            for j in range(N):
-                for k in range(N):
-                    if(k != i and k != j):
-                        h[i][j] += old_matrix[i][k]*patterns[mu][k]
-
-        for i in range(N):
-            for j in range(N):                
-                new_matrix[i][j] = old_matrix[i][j] + (1/N) * ((patterns[mu][i] * patterns[mu][j]) - (patterns[mu][i] * h[j][i]) - (patterns[mu][j] * h[i][j]))
-    
-    return new_matrix
-
-def storkey_weights_test_2(patterns):
-    """
-    Compute the weight matrix using Storkey learning rule.
-
-    Parameters:
-    patterns (array): List of patterns to calculate weights.
-
-    Returns:
-    array: Weight matrix computed using Storkey learning rule.
-    """
-    M = len(patterns)
-    N = len(patterns[0])
-    weight_matrix = np.zeros((N, N))
-
-    for pattern in patterns:
-        # Compute the effect of self-connections to later remove themw
-        self_connections = np.dot(weight_matrix, pattern) - np.diag(weight_matrix) * pattern
-
-        # Calculate the h term
-        h_term = np.outer(self_connections, pattern)
-
-        # Update the weight matrix with a corrected sign
-        weight_matrix += np.outer(pattern, pattern) - h_term - h_term.T
-
-    # Add identity matrix to the final weights
-    weight_matrix += np.eye(N)
-
-    # Normalize by the number of patterns
-    weight_matrix /= N
-
-    # Ensure the matrix is symmetric
-    weight_matrix = 0.5 * (weight_matrix + weight_matrix.T)
-
-    return weight_matrix
 
