@@ -15,7 +15,7 @@ This Python project implements an associative memory model using Hebbian learnin
 
 ## Usage
 
-1. Run the CheckerBoard script using \'python checkerboard.py \' to generate the pattern, perturb it, and perform synchronous and asynchronous dynamics.
+1. Run the CheckerBoard script using \'''python checkerboard.py \''' to generate the pattern, perturb it, and perform synchronous and asynchronous dynamics.
 2. Check the saved GIFs (`hebbianSync.gif` and `hebbianAsync.gif`) to visualize the associative memory dynamics.
 
 ## Requirements
